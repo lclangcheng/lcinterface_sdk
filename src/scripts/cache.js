@@ -3,14 +3,14 @@
 * @author lai_lc
 * @date   2017-05-03 12:16:11
 * @Last Modified by:   lai_lc
-* @Last Modified time: 2017-05-03 12:33:39
+* @Last Modified time: 2017-05-04 14:35:21
 */
 
 'use strict';
 
-var kc = kc || {};
+var lc = lc || {};
 
-kc.Cache = {
+lc.Cache = {
 	/**
 	 * 启动/关闭缓存
 	 * @type {Boolean}
@@ -45,7 +45,7 @@ kc.Cache = {
 	 * @return {[*]} 对应的缓存数据
 	 */
 	get: function(key) {
-		return _this.files[key];
+		return this.files[key];
 	}
 
 };

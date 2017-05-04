@@ -3,7 +3,7 @@
 * @author lai_lc
 * @date   2017-05-03 10:38:45
 * @Last Modified by:   lai_lc
-* @Last Modified time: 2017-05-03 18:20:03
+* @Last Modified time: 2017-05-04 15:03:00
 */
 
 'use strict';
@@ -27,7 +27,7 @@ lc.LoaderBase = lc.Class.extend({
 			return data;
 		}
 
-		_this.tryLoad(url, callback, onError, times);
+		_this.tryLoad(url, callback, onError, 0);
 	},
 
 	tryLoad: function(url, callback, onError, times) {
@@ -63,6 +63,8 @@ lc.ImageLoader = lc.LoaderBase.extend({
 		image.src = url;
 	}
 });
+
+lc.imageLoaderInstance = new lc.ImageLoader();
 
 lc.ScriptLoader = lc.LoaderBase.extend({
 	init: function() {
@@ -110,17 +112,61 @@ lc.ScriptLoader = lc.LoaderBase.extend({
 
 });
 
-lc.imageLoaderInstance = new lc.ImageLoader();
 lc.scriptLoaderInstance = new lc.ScriptLoader();
+
+lc.audioLoader  = lc.LoaderBase.extend({
+	init: function() {
+		var _this = this;
+		_this._super();
+	},
+
+	tryLoad: function(url, callback, onError, time) {
+		var _this = this;
+		var xmlHttpRequest = new lc.getXMLHttpRequest();
+		xmlHttpRequest.open("GET", url , true);
+		xmlHttpRequest.responseType = "arraybuffer";
+
+		var 
+		xmlHttpRequest.onreadystatechange = function() {
+			if (xmlHttpRequest.readyState == 4 && (xmlHttpRequest.status == 200 || xmlHttpRequest == 0)) {
+				var data = xmlHttpRequest.response,
+					timer = null;
+
+			}
+		}
+
+	}
+});
 
 lc.Loader = {
 
 	loaders: {
 		'image': lc.imageLoaderInstance,
 		'script': lc.scriptLoaderInstance
-	}
+	},
 
 	load: function(urls, callback) {
-
+		var _this = this;
+		var count = 0;
+		var loadFinish = function(obj) {
+			count++;
+			if (count >= urls.length) {
+				callback && callback();
+			}
+		};
+		var errorFunc = function(error) {
+			error && console.log(error);
+			count++;
+			if (count >= urls.length) {
+				callback && callback();
+			}
+		};
+		for (var index = 0; index < urls.length; index++) {
+			var one = urls[index];
+			var loadInstance = _this.loaders[one.type];
+			if (loadInstance) {
+				loadInstance.load(one.url, loadFinish, errorFunc);
+			}
+		}
 	}
 }

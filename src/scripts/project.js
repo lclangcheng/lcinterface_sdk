@@ -3,7 +3,7 @@
 * @author lai_lc
 * @date   2017-05-02 15:04:11
 * @Last Modified by:   lai_lc
-* @Last Modified time: 2017-05-03 17:48:00
+* @Last Modified time: 2017-05-04 14:47:52
 */
 
 'use strict';
@@ -51,17 +51,17 @@ lc.Project = {
 
 	getResourceInstance: function(res, instance) {
 		var aRes = [];
-		for (var wrapperId in instance) {
-			var wrapper = instance[wrapperId];
+		for (var warperId in instance) {
+			var wrapper = instance[warperId];
 			if (wrapper.resources) {
-				for(var resourceIndex in wrapper.resources) {
+				for(var resourceIndex = 0; resourceIndex < wrapper.resources.length; resourceIndex++) {
 					var resId = wrapper.resources[resourceIndex].resId? wrapper.resources[resourceIndex].resId: wrapper.resources[resourceIndex];
 
 					var resInfo = res[resId];
 					if (!resInfo) continue;
 
 					if (resInfo.resType === "logic") {
-						var jsPath = APIRoot + "gf/sdk/GenJs?userid=" + USERID + "&projectid=" + (PROJECTID || '') + "&instance=" + resId;
+						var jsPath = APIRoot + "gf/sdk/GenJs?userid=" + USERID + "&projectid=" + (PROJECTID || '') + "&instanceid=" + resId;
 						aRes.push({
 							type: "script",
 							url: jsPath
@@ -88,8 +88,8 @@ lc.Project = {
 						});
 					} else if (resInfo.resTYpe === "map") {
 						var list = resInfo.data.mapBlock;
-					 	for(var index in list) {
-					 		var one = list[index];
+					 	for(var listIndex = 0; listIndex < list.length; listIndex++) {
+					 		var one = list[listIndex];
 					 		aRes.push({
 					 			type: "image",
 					 			url: ResRoot + one.src.substr(1)

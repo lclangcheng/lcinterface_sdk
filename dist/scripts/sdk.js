@@ -3,14 +3,14 @@
 * @author lai_lc
 * @date   2017-05-03 12:16:11
 * @Last Modified by:   lai_lc
-* @Last Modified time: 2017-05-03 12:33:39
+* @Last Modified time: 2017-05-04 14:35:21
 */
 
 'use strict';
 
-var kc = kc || {};
+var lc = lc || {};
 
-kc.Cache = {
+lc.Cache = {
 	/**
 	 * 启动/关闭缓存
 	 * @type {Boolean}
@@ -45,7 +45,7 @@ kc.Cache = {
 	 * @return {[*]} 对应的缓存数据
 	 */
 	get: function(key) {
-		return _this.files[key];
+		return this.files[key];
 	}
 
 };
@@ -121,7 +121,7 @@ var lc = lc || {};
 * @author lai_lc
 * @date   2017-05-02 17:19:05
 * @Last Modified by:   lai_lc
-* @Last Modified time: 2017-05-03 17:32:04
+* @Last Modified time: 2017-05-04 14:01:28
 */
 
 'use strict';
@@ -134,7 +134,9 @@ lc.Core = {
 			var projectData = lc.Project.getProjectData();
 			var sceneId = projectData.ResourceText.projectSetting.defaultSceneID;
 			var aRes = lc.Project.getResourceBySceneId(sceneId);
-			console.log(aRes);
+			lc.Loader.load(aRes, function() {
+				console.log("load finished");
+			});
 		});
 	}
 }
@@ -143,7 +145,7 @@ lc.Core = {
 * @author lai_lc
 * @date   2017-05-03 10:38:45
 * @Last Modified by:   lai_lc
-* @Last Modified time: 2017-05-03 16:36:50
+* @Last Modified time: 2017-05-04 14:36:02
 */
 
 'use strict';
@@ -167,7 +169,7 @@ lc.LoaderBase = lc.Class.extend({
 			return data;
 		}
 
-		_this.tryLoad(url, callback, onError, times);
+		_this.tryLoad(url, callback, onError, 0);
 	},
 
 	tryLoad: function(url, callback, onError, times) {
@@ -204,10 +206,85 @@ lc.ImageLoader = lc.LoaderBase.extend({
 	}
 });
 
+lc.ScriptLoader = lc.LoaderBase.extend({
+	init: function() {
+		var _this = this;
+		_this._super();
+	},
+
+	tryLoad: function(url, callback, onError, times) {
+		var _this = this,
+			script = document.createElement("script"),
+			loadFunc = null,
+			errorFunc = null;
+
+		loadFunc = function(event) {
+			lc.Cache.add(url, true);
+			callback && callback(this);
+			script.parentNode && script.parentNode.removeChild(script);
+
+			script.removeEventListener('load', loadFunc, false);
+			script.removeEventListener('error', errorFunc, false);
+		};
+
+		errorFunc = function(event) {
+			script.parentNode && script.parentNode.removeChild(script);
+
+			script.removeEventListener('load', loadFunc, false);
+			script.removeEventListener('error', errorFunc, false);
+
+			if (times < _this.times) {
+				_this.tryLoad(url, callback, onError, times++);
+			} else {
+				onError && onError(event);
+				callback && callback();
+			}
+
+
+		};
+
+		script.addEventListener('load', loadFunc, false);
+		script.addEventListener('error', errorFunc, false);
+
+		script.src = url;
+		document.body.appendChild(script);
+	}
+
+});
+
+lc.imageLoaderInstance = new lc.ImageLoader();
+lc.scriptLoaderInstance = new lc.ScriptLoader();
 
 lc.Loader = {
-	load: function(url, callback) {
-		
+
+	loaders: {
+		'image': lc.imageLoaderInstance,
+		'script': lc.scriptLoaderInstance
+	},
+
+	load: function(urls, callback) {
+		var _this = this;
+		var count = 0;
+		var loadFinish = function(obj) {
+			count++;
+			if (count >= urls.length) {
+				callback && callback();
+			}
+		};
+		var errorFunc = function(error) {
+			error && console.log(error);
+			count++;
+			if (count >= urls.length) {
+				callback && callback();
+			}
+		};
+		for (var index = 0; index < urls.length; index++) {
+			var one = urls[index];
+			var loadInstance = _this.loaders[one.type];
+			if (loadInstance) {
+				loadInstance.load(one.url, loadFinish, errorFunc);
+			}
+		}
 	}
 }
 /*
@@ -231,7 +308,7 @@ lc.Object = {
 * @author lai_lc
 * @date   2017-05-02 15:04:11
 * @Last Modified by:   lai_lc
-* @Last Modified time: 2017-05-03 17:48:00
+* @Last Modified time: 2017-05-04 14:47:52
 */
 
 'use strict';
@@ -279,17 +356,17 @@ lc.Project = {
 
 	getResourceInstance: function(res, instance) {
 		var aRes = [];
-		for (var wrapperId in instance) {
-			var wrapper = instance[wrapperId];
+		for (var warperId in instance) {
+			var wrapper = instance[warperId];
 			if (wrapper.resources) {
-				for(var resourceIndex in wrapper.resources) {
+				for(var resourceIndex = 0; resourceIndex < wrapper.resources.length; resourceIndex++) {
 					var resId = wrapper.resources[resourceIndex].resId? wrapper.resources[resourceIndex].resId: wrapper.resources[resourceIndex];
 
 					var resInfo = res[resId];
 					if (!resInfo) continue;
 
 					if (resInfo.resType === "logic") {
-						var jsPath = APIRoot + "gf/sdk/GenJs?userid=" + USERID + "&projectid=" + (PROJECTID || '') + "&instance=" + resId;
+						var jsPath = APIRoot + "gf/sdk/GenJs?userid=" + USERID + "&projectid=" + (PROJECTID || '') + "&instanceid=" + resId;
 						aRes.push({
 							type: "script",
 							url: jsPath
@@ -316,8 +393,8 @@ lc.Project = {
 						});
 					} else if (resInfo.resTYpe === "map") {
 						var list = resInfo.data.mapBlock;
-					 	for(var index in list) {
-					 		var one = list[index];
+					 	for(var listIndex = 0; listIndex < list.length; listIndex++) {
+					 		var one = list[listIndex];
 					 		aRes.push({
 					 			type: "image",
 					 			url: ResRoot + one.src.substr(1)
