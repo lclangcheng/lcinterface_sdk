@@ -3,7 +3,7 @@
 * @author lai_lc
 * @date   2017-05-03 10:38:45
 * @Last Modified by:   lai_lc
-* @Last Modified time: 2017-05-04 15:03:00
+* @Last Modified time: 2017-05-08 12:22:44
 */
 
 'use strict';
@@ -56,7 +56,6 @@ lc.ImageLoader = lc.LoaderBase.extend({
 				_this.tryLoad(url, callback, onError, times++)
 			} else {
 				onError && onError(event);
-				callback && callback();
 			}
 		}, false);
 
@@ -77,8 +76,9 @@ lc.ScriptLoader = lc.LoaderBase.extend({
 			script = document.createElement("script"),
 			loadFunc = null,
 			errorFunc = null;
+			script.async = false;
 
-		loadFunc = function(event) {
+		loadFunc = function() {
 			lc.Cache.add(url, true);
 			callback && callback(this);
 			script.parentNode && script.parentNode.removeChild(script);
@@ -87,7 +87,7 @@ lc.ScriptLoader = lc.LoaderBase.extend({
 			script.removeEventListener('error', errorFunc, false);
 		};
 
-		errorFunc = function(event) {
+		errorFunc = function() {
 			script.parentNode && script.parentNode.removeChild(script);
 
 			script.removeEventListener('load', loadFunc, false);
@@ -97,9 +97,7 @@ lc.ScriptLoader = lc.LoaderBase.extend({
 				_this.tryLoad(url, callback, onError, times++);
 			} else {
 				onError && onError(event);
-				callback && callback();
 			}
-
 
 		};
 
@@ -122,27 +120,48 @@ lc.audioLoader  = lc.LoaderBase.extend({
 
 	tryLoad: function(url, callback, onError, time) {
 		var _this = this;
-		var xmlHttpRequest = new lc.getXMLHttpRequest();
-		xmlHttpRequest.open("GET", url , true);
-		xmlHttpRequest.responseType = "arraybuffer";
-
-		var 
-		xmlHttpRequest.onreadystatechange = function() {
-			if (xmlHttpRequest.readyState == 4 && (xmlHttpRequest.status == 200 || xmlHttpRequest == 0)) {
-				var data = xmlHttpRequest.response,
-					timer = null;
-
-			}
+		var timer = null;
+		var audio = Audio? new Audio(""): document.createElement("audio");
+		
+		var loadFunc = function() {
+			timer && window.clearTimeout(timer);
+			lc.Cache.add(url, true);
+			callback && callback(this);
+			removeEvent();
 		}
 
+		var errorFunc = function() {
+			onError && onError(event);
+			removeEvent();
+		}
+
+		var removeEvent = function() {
+			audio.removeEventListener('loadedmetadata', loadFunc, false);
+			audio.removeEventListener('error', errorFunc, false);
+		}
+
+		timer = setTimeout(function() {
+			console.log("load:" + url + " time out.");
+			onError && onError(event);
+			removeEvent();
+		}, 30000);
+
+		audio.addEventListener("loadedmetadata", loadFunc, false);
+		audio.addEventListener("error", errorFunc, false);
+
+		audio.src = url;
 	}
 });
 
+lc.audioLoaderInstance = new lc.audioLoader();
+
 lc.Loader = {
 
+	//保存支持下载类型的实例
 	loaders: {
 		'image': lc.imageLoaderInstance,
-		'script': lc.scriptLoaderInstance
+		'script': lc.scriptLoaderInstance,
+		'audio': lc.audioLoaderInstance
 	},
 
 	load: function(urls, callback) {
