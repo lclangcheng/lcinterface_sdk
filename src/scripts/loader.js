@@ -3,7 +3,7 @@
 * @author lai_lc
 * @date   2017-05-03 10:38:45
 * @Last Modified by:   lai_lc
-* @Last Modified time: 2017-05-08 12:22:44
+* @Last Modified time: 2017-05-09 10:17:18
 */
 
 'use strict';
@@ -14,7 +14,7 @@ lc.LoaderBase = lc.Class.extend({
 
 	times: 5,
 
-	init: function() {
+	ctor: function() {
 		
 	},
 
@@ -37,7 +37,7 @@ lc.LoaderBase = lc.Class.extend({
 });
 
 lc.ImageLoader = lc.LoaderBase.extend({
-	init: function() {
+	ctor: function() {
 		var _this = this;
 		_this._super();
 	},
@@ -66,7 +66,7 @@ lc.ImageLoader = lc.LoaderBase.extend({
 lc.imageLoaderInstance = new lc.ImageLoader();
 
 lc.ScriptLoader = lc.LoaderBase.extend({
-	init: function() {
+	ctor: function() {
 		var _this = this;
 		_this._super();
 	},
@@ -113,7 +113,7 @@ lc.ScriptLoader = lc.LoaderBase.extend({
 lc.scriptLoaderInstance = new lc.ScriptLoader();
 
 lc.audioLoader  = lc.LoaderBase.extend({
-	init: function() {
+	ctor: function() {
 		var _this = this;
 		_this._super();
 	},
