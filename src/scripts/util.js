@@ -3,7 +3,7 @@
 * @author lai_lc
 * @date   2017-05-02 15:16:03
 * @Last Modified by:   lai_lc
-* @Last Modified time: 2017-05-02 15:26:35
+* @Last Modified time: 2017-05-09 18:30:34
 */
 
 'use strict';
@@ -17,5 +17,9 @@ lc.Util = {
 	 */
 	getXMLHttpRequest: function () {
 		return window.XMLHttpRequest? new window.XMLHttpRequest(): new ActiveXObject("MSXML2.XMLHTTP");
+	},
+
+	getObjectType: function(obj) {
+		return Object.prototype.toString.call(obj).slice(8,-1);
 	}
 };
